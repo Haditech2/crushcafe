@@ -15,7 +15,13 @@ export default defineConfig(({ mode }) => {
       host: "::",
       port: 8080,
       strictPort: true,
+      fs: {
+        // Allow serving files from one level up from the package root
+        allow: ['..'],
+      },
     },
+    
+    publicDir: 'public',
     
     preview: {
       port: 8080,

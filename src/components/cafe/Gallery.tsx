@@ -58,14 +58,15 @@ const Gallery: React.FC = () => {
               className="aspect-square w-full rounded-lg overflow-hidden hover:scale-102 sm:hover:scale-105 transition-transform duration-300 cursor-pointer relative group shadow-sm hover:shadow-md"
             >
               <img
-                src={`/gallery/${image.filename}`}
+                src={`${import.meta.env.BASE_URL}gallery/${image.filename}`}
                 alt={image.alt}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   // Fallback to placeholder if image fails to load
                   const target = e.target as HTMLImageElement;
-                  target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23FEF3C7%22%2F%3E%3Ctext%20x%3D%22100%22%20y%3D%22110%22%20font-family%3D%22Arial%22%20font-size%3D%2214%22%20text-anchor%3D%22middle%22%20fill%3D%22%22%3E{image.alt}%3C%2Ftext%3E%3C%2Fsvg%3E';
+                  target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23FEF3C7%22%2F%3E%3Ctext%20x%3D%22100%22%20y%3D%22110%22%20font-family%3D%22Arial%22%20font-size%3D%2214%22%20text-anchor%3D%22middle%22%20fill%3D%22%22%3E' + encodeURIComponent(image.alt) + '%3C%2Ftext%3E%3C%2Fsvg%3E';
                 }}
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 sm:p-4">
                 <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
