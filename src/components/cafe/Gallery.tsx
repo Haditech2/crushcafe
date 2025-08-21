@@ -1,7 +1,14 @@
 import React from 'react';
 
-// Base path for images in the public directory
-const imageBasePath = '/gallery/';
+// Get the base URL for the current environment
+const getImageUrl = (filename: string) => {
+  // In production, use absolute paths from the root
+  if (import.meta.env.PROD) {
+    return `${window.location.origin}/gallery/${filename}`;
+  }
+  // In development, use relative paths
+  return `/gallery/${filename}`;
+};
 
 const Gallery: React.FC = () => {
   // Array of gallery images with their details
@@ -61,7 +68,7 @@ const Gallery: React.FC = () => {
               className="aspect-square w-full rounded-lg overflow-hidden hover:scale-102 sm:hover:scale-105 transition-transform duration-300 cursor-pointer relative group shadow-sm hover:shadow-md"
             >
               <img
-                src={`${imageBasePath}${image.filename}`}
+                src={getImageUrl(image.filename)}
                 alt={image.alt}
                 className="w-full h-full object-cover"
                 onError={(e) => {
