@@ -1,82 +1,101 @@
 // Service Worker for Crush Café
-const CACHE_NAME = 'crush-cafe-v1';
+const CACHE_NAME = 'crush-cafe-v2';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/assets/main.js',
-  '/assets/vendor.js',
-  '/assets/react.js',
-  '/gallery/bar.jpg',
-  '/gallery/customers.jpg',
-  '/gallery/drinks.jpg',
-  '/gallery/food.jpg',
-  '/gallery/interior.jpg',
-  '/gallery/outdoor.jpg'
+  '/index.html'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-      .catch(error => {
-        console.warn('Failed to cache some resources:', error);
+const addResourcesToCache = async (resources) => {
+  const cache = await caches.open(CACHE_NAME);
+  await cache.addAll(resources);
+};
+
+const putInCache = async (request, response) => {
+  if (!request.url.startsWith('http')) {
+    return; // Skip non-http(s) requests
+  }
+  
+  const cache = await caches.open(CACHE_NAME);
+  await cache.put(request, response);
+};
+
+const cacheFirst = async (request) => {
+  // Skip non-GET requests and non-http(s) requests
+  if (request.method !== 'GET' || !request.url.startsWith('http')) {
+    return fetch(request);
+  }
+
+  // Skip cross-origin requests that we can't cache
+  if (!request.url.startsWith(self.location.origin)) {
+    return fetch(request);
+  }
+
+  try {
+    // Try to get the response from the cache first
+    const responseFromCache = await caches.match(request);
+    if (responseFromCache) {
+      return responseFromCache;
+    }
+
+    // If not in cache, try the network
+    const responseFromNetwork = await fetch(request);
+    
+    // Only cache successful responses and not data URLs
+    if (responseFromNetwork && responseFromNetwork.status === 200 && 
+        responseFromNetwork.type === 'basic' && 
+        !responseFromNetwork.url.startsWith('data:')) {
+      // Clone the response for caching
+      const responseToCache = responseFromNetwork.clone();
+      putInCache(request, responseToCache).catch(error => {
+        console.warn('Failed to cache response:', error);
+      });
+    }
+    
+    return responseFromNetwork;
+  } catch (error) {
+    console.warn('Fetch failed; returning offline page', error);
+    return new Response('You are offline', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: new Headers({
+        'Content-Type': 'text/plain'
       })
+    });
+  }
+};
+
+// Install event - cache essential resources
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    addResourcesToCache(urlsToCache).catch(error => {
+      console.warn('Failed to cache during install:', error);
+    })
   );
 });
 
-self.addEventListener('fetch', event => {
-  // Skip non-GET requests and chrome-extension requests
-  if (event.request.method !== 'GET' || 
-      event.request.url.startsWith('chrome-extension://')) {
-    return;
-  }
-
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      // Return cached response if found
-      if (response) {
-        return response;
-      }
-
-      // For non-cached requests, fetch from network
-      return fetch(event.request).then(response => {
-        // Only cache valid responses
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-
-        // Don't cache data URLs
-        if (response.url.startsWith('data:')) {
-          return response;
-        }
-
-        // Clone the response for caching
-        const responseToCache = response.clone();
-
-        caches.open(CACHE_NAME)
-          .then(cache => {
-            cache.put(event.request, responseToCache).catch(error => {
-              console.warn('Failed to cache response:', error);
-            });
-          });
-
-        return response;
-      }).catch(error => {
-        console.warn('Fetch failed; returning offline page', error);
-        // You could return a custom offline page here
-        return new Response('You are offline', {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: new Headers({
-            'Content-Type': 'text/plain'
-          })
-        });
-      });
+// Activate event - clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
     })
   );
+});
+
+// Fetch event - handle all network requests
+self.addEventListener('fetch', (event) => {
+  event.respondWith(cacheFirst(event.request));
+});
+
+// Handle message event (can be used to update the service worker)
+self.addEventListener('message', (event) => {
+  if (event.data === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });

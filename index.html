@@ -32,13 +32,30 @@
       console.error('Unhandled rejection:', event.reason);
     });
 
-    // Service Worker registration with enhanced error handling
+    // Service Worker registration with enhanced error handling and update flow
     if ('serviceWorker' in navigator) {
       const registerServiceWorker = async () => {
         try {
+          // Unregister any existing service workers first
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (let registration of registrations) {
+            await registration.unregister();
+            console.log('Unregistered old service worker');
+          }
+
+          // Clear all caches
+          if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+              cacheNames.map(cacheName => caches.delete(cacheName))
+            );
+            console.log('Cleared all caches');
+          }
+
+          // Register new service worker
           const registration = await navigator.serviceWorker.register('/sw.js', {
             scope: '/',
-            updateViaCache: 'none'  // Always check for updates
+            updateViaCache: 'none'
           });
           
           console.log('ServiceWorker registration successful with scope: ', registration.scope);
@@ -51,10 +68,16 @@
             newWorker.addEventListener('statechange', () => {
               console.log('Service worker state changed to:', newWorker.state);
               
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New update available
-                console.log('New content is available; please refresh.');
-                // You could show a notification to the user here
+              if (newWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  // New update available
+                  console.log('New content is available; refreshing...');
+                  // Skip waiting and reload
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                } else {
+                  // First install
+                  console.log('Content is now available offline!');
+                }
               }
             });
           });
@@ -69,17 +92,18 @@
             }
           });
           
+          // Check for updates on page load
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          
         } catch (error) {
           console.error('ServiceWorker registration failed:', error);
         }
       };
       
-      // Wait for the page to be fully loaded before registering the service worker
-      if (document.readyState === 'complete') {
-        registerServiceWorker();
-      } else {
-        window.addEventListener('load', registerServiceWorker);
-      }
+      // Register service worker immediately
+      registerServiceWorker();
     }
     </script>
   </body>
