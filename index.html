@@ -20,25 +20,33 @@
 
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx" crossorigin></script>
     <script>
-      // This helps with SPA routing in production
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-              console.log('ServiceWorker registration successful');
-            })
-            .catch(err => {
-              console.log('ServiceWorker registration failed: ', err);
-            });
-        });
-      }
+    // Error handling
+    window.addEventListener('error', (event) => {
+      console.error('Global error:', event.error || event.message);
+    });
 
-      // Handle potential script loading errors
-      window.addEventListener('error', (event) => {
-        console.error('Script error:', event);
+    // Unhandled promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled rejection:', event.reason);
+    });
+
+    // Service Worker registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+          type: 'module'
+        })
+        .then(registration => {
+          console.log('ServiceWorker registration successful');
+        })
+        .catch(error => {
+          console.error('ServiceWorker registration failed:', error);
+        });
       });
+    }
     </script>
   </body>
 </html>
