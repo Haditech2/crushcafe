@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ReservationForm } from './ReservationForm';
 import { OrderOnlineForm } from './OrderOnlineForm';
@@ -7,6 +7,15 @@ import { FormDialog } from './FormDialog';
 const Hero: React.FC = () => {
   const [isReservationOpen, setIsReservationOpen] = useState(false);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState('');
+
+  useEffect(() => {
+    // Set the correct image path based on the environment
+    const imagePath = import.meta.env.PROD 
+      ? `${window.location.origin}/images/hero-bg.jpg`
+      : '/images/hero-bg.jpg';
+    setBackgroundImage(imagePath);
+  }, []);
 
   return (
     <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -15,7 +24,8 @@ const Hero: React.FC = () => {
         <div 
           className="w-full h-full bg-cover bg-center"
           style={{
-            backgroundImage: "url('/images/hero-bg.jpg')",
+            backgroundImage: `url('${backgroundImage}')`,
+            transition: 'background-image 0.3s ease-in-out',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
