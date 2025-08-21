@@ -32,20 +32,54 @@
       console.error('Unhandled rejection:', event.reason);
     });
 
-    // Service Worker registration
+    // Service Worker registration with enhanced error handling
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', {
-          scope: '/',
-          type: 'module'
-        })
-        .then(registration => {
-          console.log('ServiceWorker registration successful');
-        })
-        .catch(error => {
+      const registerServiceWorker = async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js', {
+            scope: '/',
+            updateViaCache: 'none'  // Always check for updates
+          });
+          
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          
+          // Check for updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            console.log('New service worker found, state:', newWorker.state);
+            
+            newWorker.addEventListener('statechange', () => {
+              console.log('Service worker state changed to:', newWorker.state);
+              
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New update available
+                console.log('New content is available; please refresh.');
+                // You could show a notification to the user here
+              }
+            });
+          });
+          
+          // Handle controller change (page refresh needed)
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+              console.log('Controller changed, reloading...');
+              window.location.reload();
+              refreshing = true;
+            }
+          });
+          
+        } catch (error) {
           console.error('ServiceWorker registration failed:', error);
-        });
-      });
+        }
+      };
+      
+      // Wait for the page to be fully loaded before registering the service worker
+      if (document.readyState === 'complete') {
+        registerServiceWorker();
+      } else {
+        window.addEventListener('load', registerServiceWorker);
+      }
     }
     </script>
   </body>
