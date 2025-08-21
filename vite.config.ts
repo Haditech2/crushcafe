@@ -1,44 +1,75 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current directory and its parent directories
   const env = loadEnv(mode, process.cwd(), '');
+  const isProduction = mode === 'production';
   
   return {
-    // This ensures the base is set correctly for both development and production
-    base: env.VITE_PUBLIC_URL || '/',
+    base: isProduction ? '/' : '/',
     
     server: {
       host: "::",
       port: 8080,
+      strictPort: true,
     },
     
-    // For production builds
+    preview: {
+      port: 8080,
+      strictPort: true,
+    },
+    
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: true,
+      emptyOutDir: true,
       rollupOptions: {
+        input: {
+          main: resolve(__dirname, 'index.html'),
+        },
         output: {
+          entryFileNames: 'assets/[name].[hash].js',
+          chunkFileNames: 'assets/[name].[hash].js',
+          assetFileNames: 'assets/[name].[hash].[ext]',
           manualChunks: {
             react: ['react', 'react-dom', 'react-router-dom'],
             vendor: ['@tanstack/react-query'],
           },
         },
       },
+      commonjsOptions: {
+        transformMixedEsModules: true,
+      },
     },
     
     plugins: [
-      react()
+      react({
+        jsxImportSource: '@emotion/react',
+      })
     ],
     
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        '@': resolve(__dirname, 'src'),
+        '~': resolve(__dirname, 'public'),
       },
+    },
+    
+    optimizeDeps: {
+      esbuildOptions: {
+        // Node.js global to browser globalThis
+        define: {
+          global: 'globalThis',
+        },
+      },
+    },
+    
+    define: {
+      'process.env': {},
+      __APP_ENV__: env.APP_ENV,
     },
   };
 });
