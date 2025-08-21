@@ -1,5 +1,8 @@
 import React from 'react';
 
+// Image paths from public directory
+const imageBasePath = '/gallery/';
+
 const Gallery: React.FC = () => {
   // Array of gallery images with their details
   const galleryImages = [
@@ -7,37 +10,37 @@ const Gallery: React.FC = () => {
       id: 1, 
       filename: 'interior.jpg',
       alt: 'Cozy Interior', 
-      category: 'Interior' 
+      category: 'Interior'
     },
     { 
       id: 2, 
       filename: 'outdoor.jpg',
       alt: 'Outdoor Lounge', 
-      category: 'Outdoor' 
+      category: 'Outdoor'
     },
     { 
       id: 3, 
       filename: 'bar.jpg',
       alt: 'Stylish Bar', 
-      category: 'Bar' 
+      category: 'Bar'
     },
     { 
       id: 4, 
       filename: 'food.jpg',
       alt: 'Delicious Food', 
-      category: 'Food' 
+      category: 'Food'
     },
     { 
       id: 5, 
       filename: 'drinks.jpg',
       alt: 'Refreshing Drinks', 
-      category: 'Drinks' 
+      category: 'Drinks'
     },
     { 
       id: 6, 
       filename: 'customers.jpg',
       alt: 'Happy Customers', 
-      category: 'Atmosphere' 
+      category: 'Atmosphere'
     }
   ];
 
@@ -58,7 +61,7 @@ const Gallery: React.FC = () => {
               className="aspect-square w-full rounded-lg overflow-hidden hover:scale-102 sm:hover:scale-105 transition-transform duration-300 cursor-pointer relative group shadow-sm hover:shadow-md"
             >
               <img
-                src={`${import.meta.env.BASE_URL}gallery/${image.filename}`}
+                src={`${imageBasePath}${image.filename}`}
                 alt={image.alt}
                 className="w-full h-full object-cover"
                 onError={(e) => {

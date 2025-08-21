@@ -22,6 +22,14 @@ export default defineConfig(({ mode }) => {
     },
     
     publicDir: 'public',
+    assetsInclude: ['**/*.jpg', '**/*.jpeg', '**/*.png', '**/*.svg'],
+    
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+        '~': fileURLToPath(new URL('./public', import.meta.url)),
+      },
+    },
     
     preview: {
       port: 8080,
@@ -65,13 +73,6 @@ export default defineConfig(({ mode }) => {
         jsxImportSource: '@emotion/react',
       })
     ],
-    
-    resolve: {
-      alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
-        '~': fileURLToPath(new URL('./public', import.meta.url)),
-      },
-    },
     
     optimizeDeps: {
       esbuildOptions: {
