@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Image paths from public directory
+// Base path for images in the public directory
 const imageBasePath = '/gallery/';
 
 const Gallery: React.FC = () => {

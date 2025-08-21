@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';
   
   return {
-    base: isProduction ? '/' : '/',
+    base: '/', // Always use root-relative paths
     
     server: {
       host: "::",
@@ -23,6 +23,10 @@ export default defineConfig(({ mode }) => {
     
     publicDir: 'public',
     assetsInclude: ['**/*.jpg', '**/*.jpeg', '**/*.png', '**/*.svg'],
+    // Ensure public assets are copied as-is
+    optimizeDeps: {
+      exclude: ['**/gallery/*']
+    },
     
     resolve: {
       alias: {
@@ -42,21 +46,26 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       emptyOutDir: true,
       minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-        },
-      },
+      // Copy public directory to dist
+      copyPublicDir: true,
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'index.html'),
         },
         output: {
           format: 'esm',
-          entryFileNames: 'assets/[name]-[hash].js',
-          chunkFileNames: 'assets/[name]-[hash].js',
-          assetFileNames: 'assets/[name]-[hash][extname]',
+          entryFileNames: 'assets/js/[name]-[hash].js',
+          chunkFileNames: 'assets/js/[name]-[hash].js',
+          assetFileNames: (assetInfo) => {
+            const extType = assetInfo.name?.split('.').pop()?.toLowerCase() || '';
+            if (['png', 'jpg', 'jpeg', 'svg', 'gif', 'tiff', 'bmp', 'ico'].includes(extType)) {
+              return 'assets/images/[name]-[hash][extname]';
+            }
+            if (extType === 'css') {
+              return 'assets/css/[name]-[hash][extname]';
+            }
+            return 'assets/[name]-[hash][extname]';
+          },
           manualChunks: {
             react: ['react', 'react-dom', 'react-router-dom'],
             vendor: ['@tanstack/react-query'],
